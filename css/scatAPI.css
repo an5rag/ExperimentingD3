@@ -1,0 +1,90 @@
+body {
+    /*background: cornflowerblue;*/
+    background-attachment: fixed;
+    /*background-image: url("http://a2zhdwallpapers.com/wp-content/uploads/ktzbulkwallpaper-1425520112/minimalistic-birds_00417432.jpg");*/
+    background-image: url("http://cdn.paper4pc.com/images/abstract-minimalistic-wallpaper-3.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+h1 {
+    font-family: 'Yanone Kaffeesatz', sans-serif;
+    font-size: 300%;
+    text-align: center;
+    margin-top: 70px;
+}
+
+h2{
+    font-family: 'Alegreya Sans', sans-serif;
+    text-align: center;
+    color: grey;
+    font-weight: bold;
+}
+
+h3{
+    font-family: 'Yanone Kaffeesatz', sans-serif;
+    font-size: 200%;
+    margin-top: 60px;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+p,form {
+    font-family: 'Cuprum', sans-serif;
+    font-size: 140%;
+    margin-left: 50px;
+    margin-right: 50px;
+    text-align: justify;
+}
+
+#main-chart {
+
+    display: block;
+    margin: auto;
+    margin-top: 50px;
+    height: 600px;
+    width: 800px;
+    background: whitesmoke;
+    border: 1px solid black;
+}
+
+#main {
+    background: rgba(255, 255, 255, .5);
+    overflow: auto;
+}
+
+.axis text {
+    font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.hexagon {
+    fill: white;
+    stroke: #000;
+    stroke-width: .5px;
+}
+
+.brush .extent {
+    stroke: black;
+    fill: green;
+    fill-opacity: .125;
+    shape-rendering: crispEdges;
+}
+
+.chart-title{
+    font-size: large;
+    font-weight: bold;
+}
+
+.selected {
+    fill: red;
+    fill-opacity: 1;
+}
+

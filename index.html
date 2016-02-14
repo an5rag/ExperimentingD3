@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scatter API</title>
+
+    <!--Inlcluding Ajax-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+    <!--Including D3 and D3 Hexbin-->
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/d3.hexbin.v0.js"></script>
+
+
+    <!--Including bootstrap-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+            integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+            crossorigin="anonymous"></script>
+
+    <!--Including Google Fonts-->
+    <link href='https://fonts.googleapis.com/css?family=Cuprum|Alegreya+Sans|Yanone+Kaffeesatz' rel='stylesheet'
+          type='text/css'>
+
+    <!--Including highlight-->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+    <!--Including Scatter API-->
+    <script src="js/scatterAPI.js"></script>
+    <link rel="stylesheet" href="css/scatAPI.css">
+
+
+</head>
+<body>
+<div class="row">
+    <div class="col-lg-2"></div>
+    <div class="col-lg-8" id="main" style="min-height: 100vh">
+        <h1>
+            My Experiments with D3:
+        </h1>
+        <h2>
+            Building a Scatter-Plot API
+        </h2>
+        <p style="margin-top: 30px">
+            In a recent research project of mine, I was required to plot a staggering number of scatter plots
+
+            in different div sizes with different properties (labels, titles, etc).
+            So it just made sense to wrap up the d3 function into a nice API.
+            At the time of writing this, the API is not quite robust, but does an okayish job of
+            resizing with target svg sizes.
+        </p>
+        <h3>
+            Demo
+        </h3>
+        <p>
+            Try playing with the different options.
+        </p>
+        <p>
+        <form id="user-form">
+            Title:
+            <input type="text" name="title" placeholder="My epic chart">
+            <br>
+            X-label:
+            <input type="text" name="xlab" placeholder="x-axis">
+            Y-label:
+            <input type="text" name="ylab" placeholder="y-axis">
+
+
+            <br>
+            Number of points: <input type="number" name="numberOfPoints" placeholder="1000">
+            <br>
+            X-range from <input type="number" name="xMin" placeholder="0"> to <input type="number" name="xMax"
+                                                                                     placeholder="100"><br>
+            Y-range from <input type="number" name="yMin" placeholder="0"> to <input type="number" name="yMax"
+                                                                                     placeholder="100">
+
+            <br><br><input type="submit" value="Update">
+            <form>
+                <input type="checkbox" id="brush" name="brush" value="brush">Brush
+            </form>
+
+        </form>
+        </p>
+
+        <script>
+            $("#user-form").submit(function (event) {
+                event.preventDefault()
+                var formArray = $('form').serializeArray();
+//
+                drawUserChart(xlab = formArray[1]['value'], ylab = formArray[2]['value'], title = formArray[0]['value'], brush = $('#brush').prop('checked'), minX = parseInt(formArray[4]['value']), maxX = parseInt(formArray[5]['value']), minY = parseInt(formArray[6]['value']), maxY = parseInt(formArray[7]['value']), height = 500, width = 40, numberOfPoints = formArray[3]['value']);
+            })
+
+        </script>
+
+        <svg id="main-chart">
+
+        </svg>
+
+
+        <p style="margin-top: 30px">
+            Selected region using brush: <span id="brush-region" style="color: orangered">N/A</span>
+        </p>
+        <h2 style="margin-top: 100px; margin-bottom: 30px">
+            Usage
+        </h2>
+
+        <p>
+            Scroll down to see the complete HTML, CSS and Javascript code.
+            <br>
+            I've tried making the API as consistent with the popular charting APIs (like highcharts) as I possibly
+            could.
+            <br>
+            Calling the function is just one line.
+        <pre><code class="javascript">
+            drawScatter(options);
+        </code></pre>
+        <p>
+            The options object looks like this:
+        </p>
+        <pre><code class="javascript">
+            'renderTo': "#main-chart",
+            'data': [{'x': 4, 'y': 5}, {'x': 3, 'y': 5}, {'x': 4, 'y': 2}, {'x': 4, 'y': 7}],
+            'x-label': "x-axis",
+            'y-label': "y-axis",
+            'brush': true,
+            'title': "My Epic Chart"
+        </code></pre>
+        
+        <h3>
+            The CSS
+        </h3>
+        <p>
+            <pre><code>
+                #main-chart {
+
+                display: block;
+                margin: auto;
+                margin-top: 50px;
+                height: 600px;
+                width: 800px;
+                background: whitesmoke;
+                border: 1px solid black;
+                }
+
+                .axis text {
+                font: 10px sans-serif;
+                }
+
+                .axis path,
+                .axis line {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+                }
+
+                .hexagon {
+                fill: white;
+                stroke: #000;
+                stroke-width: .5px;
+                }
+
+                .brush .extent {
+                stroke: black;
+                fill: green;
+                fill-opacity: .125;
+                shape-rendering: crispEdges;
+                }
+            </code></pre>
+        </p>
+
+        </p>
+        <h3>
+            The Entire Javascript
+        </h3>
+        <p>
+            <pre><code>
+                function drawScatter(options) {
+                var container, brushable, data, xlabel, ylabel, title, brush;
+
+                //Find an element to render the chart
+                if ($(options['renderTo']) != undefined) {
+                container = $(options['renderTo']);
+                }
+                else {
+                console.log("Tried to render chart to an unknown or missing element!");
+                return;
+                }
+
+                if ('brush' in options) {
+                brushable = options['brush'];
+                }
+                else
+                brushable = false;
+
+                if ('data' in options) {
+                data = options['data'];
+                }
+                else
+                data = {};
+
+                title = options['title'];
+                xlabel = options['x-label'];
+                ylabel = options['y-label'];
+
+                // finding actual dimensions of div
+                var heightOfDiv = container.innerHeight();
+                console.log(innerHeight);
+                var widthOfDiv = container.innerWidth();
+                console.log(innerWidth);
+
+                // finding relative point radius
+                var radius = 4;
+
+                // Setting margins as percentages
+                var topMargin = heightOfDiv * 0.14;
+                var bottomMargin = heightOfDiv * 0.1;
+                var rightMargin = widthOfDiv * 0.08;
+                var leftMargin = widthOfDiv * 0.09;
+
+                var margin = {
+                top: Math.ceil(topMargin),
+                right: Math.ceil(rightMargin),
+                bottom: Math.ceil(bottomMargin),
+                left: Math.ceil(leftMargin)
+                },
+                width = widthOfDiv - margin.left - margin.right,
+                height = heightOfDiv - margin.top - margin.bottom;
+
+
+                //function to get x Value from data
+                var xVals = function (d) {
+                return d['x'];
+                }
+
+                //function to get y Value from data
+                var yVals = function (d) {
+                return d['y'];
+                }
+
+                //setting y-scale to fit in the svg window
+                var yScale = d3.scale.linear()
+                .domain([0, d3.max(data, yVals)])
+                .range([height, 0]);
+
+                //setting x-scale to fit in the svg window
+                var xScale = d3.scale.linear()
+                .domain([0, d3.max(data, xVals)])
+                .range([0, width]);
+
+                // AXES:
+                // to change tick-sizes: .ticksize(inner, outer) where inner are the normal ticks and outer are the end
+                ticks
+                // here we are keeping the inner ticks to the default value of 6 and the outer to negative extremes to
+                form a box
+
+                var xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom");
+                //.tickSize(6, -height);
+
+
+                var yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient("left");
+                //.tickSize(6, -widt
+
+
+                // declaring brush
+                var brush = d3.svg.brush()
+                .x(d3.scale.identity().domain([0, width]))
+                .y(d3.scale.identity().domain([0, height]))
+                .on("brush", brushed);
+
+
+                var svg = d3.select(options['renderTo'])
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g") //group that will house the plot
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")"); //to center the g in the svg
+
+                /**
+                * MAIN SCATTERPLOT
+                */
+                var scatterPlot = svg.append('g')
+                .selectAll('circle').data(data)
+                .enter().append('circle')
+                .style('fill', "darkblue")
+                .attr('r', 0)
+                .attr('cx', function (d) {
+                return xScale(d['x'])
+                })
+                .attr('cy', function (d) {
+                return yScale(d['y'])
+                })
+                ;
+
+                // load the points animatedly
+                // reference url for ease: https://github.com/mbostock/d3/wiki/Transitions#d3_ease
+                scatterPlot.transition()
+                .attr('r', radius)
+                .duration(1000)
+                .ease('elastic');
+
+
+                // adding the axes
+                svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+                svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+                // adding the axes labels
+                svg.append("text")
+                .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to
+                the anchor
+                .attr("transform", "translate(" + (-leftMargin / 2) + "," + (height / 2) + ")rotate(-90)") // text is
+                drawn off the screen top left, move down and out and rotate
+                .text(ylabel);
+
+                svg.append("text")
+                .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to
+                the anchor
+                .attr("transform", "translate(" + (width / 2) + "," + (height + 6 + (bottomMargin / 2)) + ")") // centre
+                below axis
+                .text(xlabel);
+
+                // title
+                svg.append("text")
+                .attr("class", "chart-title")
+                .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to
+                the anchor
+                .attr("transform", "translate(" + (width / 2) + "," + ( -20 + ")")) // text is drawn off the screen top
+                left, move down and out and rotate
+                .text(title);
+
+                // adding the brush
+                if (brushable)
+                svg.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.event);
+
+                function brushed() {
+                var extent = brush.extent();
+                var xStart = xScale.invert(extent[0][0]);
+                var yStart = yScale.invert(extent[0][1]);
+                var xEnd = xScale.invert(extent[1][0]);
+                var yEnd = yScale.invert(extent[1][1]);
+                xStart = Math.round(xStart * 100) / 100;
+                xEnd = Math.round(xEnd * 100) / 100;
+                yStart = Math.round(yStart * 100) / 100;
+                yEnd = Math.round(yEnd * 100) / 100;
+
+
+                $("#brush-region").text(("(" + xStart + ", " + yStart + ") to (" + xEnd + ", " + yEnd + ")"));
+                }
+
+                }
+            </code></pre>
+        </p>
+    </div>
+    <div class="col-lg-2"></div>
+</div>
+
+<script>
+    drawRandomChart();
+</script>
+</body>
+</html>
