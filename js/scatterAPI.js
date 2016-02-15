@@ -2,7 +2,7 @@
  * Created by an5ra on 2/14/2016.
  */
 
-
+var xStart, yStart, xEnd, yEnd;
 function drawScatter(options) {
     var container, brushable, data, xlabel, ylabel, title, brush;
 
@@ -33,9 +33,9 @@ function drawScatter(options) {
 
     // finding actual dimensions of div
     var heightOfDiv = container.innerHeight();
-    console.log(innerHeight);
+    //console.log(innerHeight);
     var widthOfDiv = container.innerWidth();
-    console.log(innerWidth);
+    //console.log(innerWidth);
 
     // finding relative point radius
     var radius = 4;
@@ -82,14 +82,14 @@ function drawScatter(options) {
 
     var xAxis = d3.svg.axis()
         .scale(xScale)
-        .orient("bottom");
-    //.tickSize(6, -height);
+        .orient("bottom")
+        .tickSize(6, -height);
 
 
     var yAxis = d3.svg.axis()
         .scale(yScale)
-        .orient("left");
-    //.tickSize(6, -widt
+        .orient("left")
+        .tickSize(6, -width);
 
 
     // declaring brush
@@ -105,28 +105,102 @@ function drawScatter(options) {
         .append("g") //group that will house the plot
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")"); //to center the g in the svg
 
-    /**
-     * MAIN SCATTERPLOT
-     */
-    var scatterPlot = svg.append('g')
-        .selectAll('circle').data(data)
-        .enter().append('circle')
-        .style('fill', "darkblue")
-        .attr('r', 0)
-        .attr('cx', function (d) {
-            return xScale(d['x'])
-        })
-        .attr('cy', function (d) {
-            return yScale(d['y'])
-        })
-        ;
+    // ------------------ HEX BIN PROPERTIES --------------------------------------
 
-    // load the points animatedly
-    // reference url for ease: https://github.com/mbostock/d3/wiki/Transitions#d3_ease
-    scatterPlot.transition()
-        .attr('r', radius)
-        .duration(1000)
-        .ease('elastic');
+    var points = new Array(data.length)
+
+    // converting to array of points
+    for (var i = 0; i < data.length; i++) {
+        var point = [xScale(data[i]['x']), yScale(data[i]['y'])]
+        points[i] = point;
+    }
+
+    /*
+     Clip-path is made to clip anything that goes out of the svg
+     */
+    svg.append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("class", "mesh")
+        .attr("width", width)
+        .attr("height", height);
+
+
+    var hexColor = d3.scale.linear()
+        .domain([0, 20])
+        .range(["white", "darkblue"])
+        .interpolate(d3.interpolateLab);
+
+    var hexColorRed = d3.scale.linear()
+        .domain([0, 20])
+        .range(["white", "maroon"])
+        .interpolate(d3.interpolateLab);
+
+    var hexbin = d3.hexbin()
+        .size([width, height])
+        .radius(20);
+
+
+    if(points.length>10000)
+        drawHexbin();
+    else
+        drawScatterPlot();
+    // ------------------- DRAWING PLOTS FUNCTIONS -------------------------------------
+
+    /**
+     * DRAWING A HEXBIN PLOT
+     */
+    function drawHexbin() {
+        var hexbinPlot = svg.append("g")
+            .attr("clip-path", "url(#clip)")
+            .selectAll(".hexagon")
+            .data(hexbin(points)) // returns an array of bins
+            .enter().append("path") // enter returns all fictitious elements according to number of data points
+            .attr("class", "hexagon") // the class hexagon is a custom class made to incorporate stroke and fill
+            .attr("d", hexbin.hexagon())
+            .attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")"; // Each bin (or d) returned by hexbin(points) is an array containing the bin’s points
+            })
+            ;
+
+        //load the points animatedly
+        //reference url for ease: https://github.com/mbostock/d3/wiki/Transitions#d3_ease
+
+        hexbinPlot.transition()
+            .style("fill", function (d) {
+                return hexColor(d.length);
+            })
+            .duration(900)
+            .ease('sin');
+    }
+
+    /**
+     * DRAWING A SCATTERPLOT
+     */
+    function drawScatterPlot() {
+        var scatterPlot = svg.append('g')
+            .attr("clip-path", "url(#clip)")
+            .selectAll('circle').data(data)
+            .enter().append('circle')
+            .style('fill', "darkblue")
+            .attr('r', 0)
+            .attr('cx', function (d) {
+                return xScale(d['x'])
+            })
+            .attr('cy', function (d) {
+                return yScale(d['y'])
+            })
+            ;
+
+        //load the points animatedly
+        //reference url for ease: https://github.com/mbostock/d3/wiki/Transitions#d3_ease
+        //load the points animatedly
+        scatterPlot.transition()
+            .attr('r', 4)
+            .duration(1000)
+            .ease('elastic')
+
+    }
 
 
     // adding the axes
@@ -166,10 +240,10 @@ function drawScatter(options) {
 
     function brushed() {
         var extent = brush.extent();
-        var xStart = xScale.invert(extent[0][0]);
-        var yStart = yScale.invert(extent[0][1]);
-        var xEnd = xScale.invert(extent[1][0]);
-        var yEnd = yScale.invert(extent[1][1]);
+        xStart = xScale.invert(extent[0][0]);
+        yStart = yScale.invert(extent[0][1]);
+        xEnd = xScale.invert(extent[1][0]);
+        yEnd = yScale.invert(extent[1][1]);
         xStart = Math.round(xStart * 100) / 100;
         xEnd = Math.round(xEnd * 100) / 100;
         yStart = Math.round(yStart * 100) / 100;
@@ -199,17 +273,17 @@ function drawUserChart(xlab, ylab, title, brush, minX, maxX, minY, maxY, height,
 
     var points = [];
     var i = 0;
-    console.log("number of points" + numberOfPoints);
+    //console.log("number of points" + numberOfPoints);
     while (i < numberOfPoints) {
         var x = Math.floor(Math.random() * (maxX - minX)) + minX;
         var y = Math.floor(Math.random() * (maxY - minY)) + minY;
         var obj = {'x': x, 'y': y};
-        console.log(obj);
+        //console.log(obj);
         points.push(obj);
 
         i++;
     }
-    console.log("points are:" + points);
+    //console.log("points are:" + points);
     var options = {
         'renderTo': "#main-chart",
         'data': points,
@@ -218,7 +292,7 @@ function drawUserChart(xlab, ylab, title, brush, minX, maxX, minY, maxY, height,
         'title': title,
         'brush': brush
     };
-    console.log(options);
+    //console.log(options);
 
     $("#main-chart").html("");
     drawScatter(options);
