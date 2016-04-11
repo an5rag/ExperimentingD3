@@ -61,8 +61,10 @@ p,form {
 .axis path,
 .axis line {
     fill: none;
-    stroke: #000;
+    stroke: #ddd;
     shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+    z-index: 50;
 }
 
 .hexagon {
@@ -78,6 +80,13 @@ p,form {
     shape-rendering: crispEdges;
 }
 
+.brushRed .extent2{
+    stroke:black;
+    fill: red;
+    fill-opacity: .2;
+    shape-rendering: crispEdges;
+}
+
 .chart-title{
     font-size: large;
     font-weight: bold;
@@ -88,3 +97,11 @@ p,form {
     fill-opacity: 1;
 }
 
+.userPolygon{
+    /*z-index: 999;*/
+    fill:green;
+    fill-opacity: .2;
+    stroke: black;
+    /*border: solid black 5px;*/
+    shape-rendering: crispEdges;
+}

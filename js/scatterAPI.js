@@ -2,7 +2,8 @@
  * Created by an5ra on 2/14/2016.
  */
 
-var xStart, yStart, xEnd, yEnd;
+var scatter;
+var getBrushPoints;
 function drawScatter(options) {
     var container, brushable, data, xlabel, ylabel, title, brush;
 
@@ -26,8 +27,12 @@ function drawScatter(options) {
     }
     else
         data = {};
-
-    title = options['title'];
+    if ($(options['title']) != undefined) {
+        title = options['title'];
+    }
+    else {
+        title = "Untitled Graph"
+    }
     xlabel = options['x-label'];
     ylabel = options['y-label'];
 
@@ -90,21 +95,112 @@ function drawScatter(options) {
         .scale(yScale)
         .orient("left")
         .tickSize(6, -width);
+    // ZOOM VARIABLE
+    var zoom = d3.behavior.zoom()
+        .scaleExtent([1, 10])
+        .on("zoom", zoomed);
+
+///////////////////////////////////////////////////////// BRUSH PROPERTIES
+
+    //keep track of existing brushes
+    var brushes = [];
 
 
-    // declaring brush
-    var brush = d3.svg.brush()
-        .x(d3.scale.identity().domain([0, width]))
-        .y(d3.scale.identity().domain([0, height]))
-        .on("brush", brushed);
+    /**
+     * Function to handle a new brush
+     */
+    var newBrush = function () {
+        console.log("newBrush() called!");
+
+        var brush = d3.svg.brush()
+            .x(d3.scale.identity().domain([0, width]))
+            .y(d3.scale.identity().domain([0, height]))
+            .on("brush", brushed)
+            .on("brushend", brushend); //Keep track of what brushes is surrounding
+
+        brushes.push(brush);
+        console.log("Starting extent:" + brush.extent())
+
+        if (brushable)
+            svg.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.event);
+
+        function brushed() {
+            var extent = brush.extent();
+            xStart = xScale.invert(extent[0][0]);
+            yStart = yScale.invert(extent[0][1]);
+            xEnd = xScale.invert(extent[1][0]);
+            yEnd = yScale.invert(extent[1][1]);
+            xStart = Math.round(xStart * 100) / 100;
+            xEnd = Math.round(xEnd * 100) / 100;
+            yStart = Math.round(yStart * 100) / 100;
+            yEnd = Math.round(yEnd * 100) / 100;
+
+
+            $("#brush-region").text(("(" + xStart + ", " + yStart + ") to (" + xEnd + ", " + yEnd + ")"));
+        }
+
+        function brushend() {
+            //console.log(brushes[brushes.length-1].extent())
+            //if(true)
+            //{
+            //    var lastBrushExtent = brushes[brushes.length-1].extent();
+            //    var xStartTemp = xScale.invert(lastBrushExtent[0][0]);
+            //    var xEndTemp = xScale.invert(lastBrushExtent[1][0]);
+            //    xEndTemp = Math.round(xEndTemp * 100) / 100;
+            //
+            //    if (xStartTemp - xEndTemp != 0)
+            //        newBrush();
+            //}
+
+        }
+
+    }
+
+    //// declaring brush
+    //var brush = d3.svg.brush()
+    //    .x(d3.scale.identity().domain([0, width]))
+    //    .y(d3.scale.identity().domain([0, height]))
+    //    .on("brush", brushed);
 
 
     var svg = d3.select(options['renderTo'])
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g") //group that will house the plot
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")"); //to center the g in the svg
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")") //to center the g in the svg
+    //.call(zoom);
+        ;
+    //GRID LINES
+    svg.append("g")
+        .attr("class", "x axis")
+        .selectAll("line")
+        .data(d3.range(0, width, 10))
+        .enter().append("line")
+        .attr("x1", function (d) {
+            return d;
+        })
+        .attr("y1", 0)
+        .attr("x2", function (d) {
+            return d;
+        })
+        .attr("y2", height);
 
+    svg.append("g")
+        .attr("class", "y axis")
+        .selectAll("line")
+        .data(d3.range(0, height, 10))
+        .enter().append("line")
+        .attr("x1", 0)
+        .attr("y1", function (d) {
+            return d;
+        })
+        .attr("x2", width)
+        .attr("y2", function (d) {
+            return d;
+        });
     // ------------------ HEX BIN PROPERTIES --------------------------------------
 
     var points = new Array(data.length)
@@ -126,7 +222,7 @@ function drawScatter(options) {
         .attr("height", height);
 
 
-    var hexColor = d3.scale.linear()
+    var hexColor = d3.scale.log()
         .domain([0, 20])
         .range(["white", "darkblue"])
         .interpolate(d3.interpolateLab);
@@ -141,10 +237,8 @@ function drawScatter(options) {
         .radius(20);
 
 
-    if(points.length>10000)
-        drawHexbin();
-    else
-        drawScatterPlot();
+    drawScatterPlot();
+
     // ------------------- DRAWING PLOTS FUNCTIONS -------------------------------------
 
     /**
@@ -231,28 +325,80 @@ function drawScatter(options) {
         .attr("transform", "translate(" + (width / 2) + "," + ( -20 + ")"))  // text is drawn off the screen top left, move down and out and rotate
         .text(title);
 
-    // adding the brush
-    if (brushable)
-        svg.append("g")
-            .attr("class", "brush")
-            .call(brush)
-            .call(brush.event);
-
-    function brushed() {
-        var extent = brush.extent();
-        xStart = xScale.invert(extent[0][0]);
-        yStart = yScale.invert(extent[0][1]);
-        xEnd = xScale.invert(extent[1][0]);
-        yEnd = yScale.invert(extent[1][1]);
-        xStart = Math.round(xStart * 100) / 100;
-        xEnd = Math.round(xEnd * 100) / 100;
-        yStart = Math.round(yStart * 100) / 100;
-        yEnd = Math.round(yEnd * 100) / 100;
-
-
-        $("#brush-region").text(("(" + xStart + ", " + yStart + ") to (" + xEnd + ", " + yEnd + ")"));
+    /////////////////////////////////////////////////////////// adding the brush
+    //if (brushable)
+    //newBrush();
+    //getBrushPoints = function () {
+    //    return [xStart,  yStart, xEnd, yEnd];
+    //}
+    function zoomed() {
+        svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
 
+    svg.attr("style", "border: 5px solid red");
+    //clickPolyPoints(d3.select("#main-chart"));
+}
+
+function drawPolygon() {
+    clickPolyPoints(d3.select("#main-chart"));
+
+}
+
+var Polypoints;
+var currentPolygon;
+var polygonpointsSet = [];
+
+/**
+ * Function to help draw polygons on d3 chart
+ * @param svg
+ */
+function clickPolyPoints(svg) {
+    var polygon = svg.append('polygon').classed("userPolygon", true);
+    polypoints = []
+    currentPolygon = polygon;
+    //currentPolypoints = polypoints;
+    svg.on("click", function () {
+        polypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
+        console.log(polypoints.join(" "));
+        updatePolygon(polygon, polypoints);
+    });
+    svg.on("mousemove", function () {
+            var tempPolypoints = polypoints.slice();
+            tempPolypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
+            updatePolygon(polygon, tempPolypoints);
+
+        }
+    );
+    svg.on("contextmenu", function (data, index) {
+        //handle right click
+
+        //stop showing browser menu
+        d3.event.preventDefault();
+        polypoints=[];
+
+        updatePolygon(polygon, polypoints);
+    });
+    svg.on("mouseout", function () {
+        updatePolygon(polygon, polypoints);
+    })
+}
+
+function undoPolyPoints() {
+    if (clickPolyPoints.length > 0) {
+        polypoints =polypoints.slice(0, polypoints.length - 1);
+        updatePolygon(currentPolygon, polypoints);
+    }
+}
+
+
+
+function changePolygonColor(color){
+    currentPolygon.attr("style","fill: "+color);
+}
+function updatePolygon(polygon, polypoints) {
+    polygon.attr('points', "");
+    polygon.attr('points', polypoints);
+    //console.log(polygon.attr('points'));
 }
 
 function drawRandomChart() {
@@ -265,15 +411,26 @@ function drawRandomChart() {
         'brush': true,
         'title': "My Epic Chart"
     };
-    drawScatter(options);
+    scatter = drawScatter(options);
 
 }
 
 function drawUserChart(xlab, ylab, title, brush, minX, maxX, minY, maxY, height, width, numberOfPoints) {
-
+    console.log(xlab == '')
+    xlab = xlab != '' ? xlab : 'X-Axis';
+    ylab = ylab != '' ? ylab : 'Y-Axis';
+    var untitledGraph = "Untitled"
+    title = title != '' ? title : untitledGraph;
+    //brush =  brush == '' ? brush : True;
+    minX = isNaN(minX) ? 0 : minX;
+    minY = isNaN(minY) ? 50 : minY;
+    maxX = isNaN(maxX) ? 100 : maxX;
+    maxY = isNaN(maxY) ? 150 : maxY;
+    numberOfPoints = isNaN(numberOfPoints) || numberOfPoints == '' ? 200 : numberOfPoints;
+    //alert(numberOfPoints);
     var points = [];
     var i = 0;
-    //console.log("number of points" + numberOfPoints);
+    console.log("number of points: " + numberOfPoints);
     while (i < numberOfPoints) {
         var x = Math.floor(Math.random() * (maxX - minX)) + minX;
         var y = Math.floor(Math.random() * (maxY - minY)) + minY;
