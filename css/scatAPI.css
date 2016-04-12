@@ -97,11 +97,18 @@ p,form {
     fill-opacity: 1;
 }
 
-.userPolygon{
+.userPolygon {
     /*z-index: 999;*/
-    fill:green;
+    fill: green;
     fill-opacity: .2;
     stroke: black;
     /*border: solid black 5px;*/
     shape-rendering: crispEdges;
+
+}
+.polygonRedify{
+    fill:red;
+}
+.highlightPolygon{
+    fill:blue;!important;
 }

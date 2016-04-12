@@ -170,10 +170,11 @@ function drawScatter(options) {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g") //group that will house the plot
+        .attr("id", "main-area")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")") //to center the g in the svg
     //.call(zoom);
         ;
-    //GRID LINES
+    //////////////////////////////////////////////////////GRID LINES
     svg.append("g")
         .attr("class", "x axis")
         .selectAll("line")
@@ -335,18 +336,27 @@ function drawScatter(options) {
         svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
 
-    svg.attr("style", "border: 5px solid red");
     //clickPolyPoints(d3.select("#main-chart"));
+    //svg.on("mouseleave", function () {
+    //    console.log("Mouse out!");
+    //})
+    //svg.on("mouseenter", function () {
+    //    console.log("Mouse in!");
+    //})
 }
 
 function drawPolygon() {
+    drawPolygonFlag = true;
     clickPolyPoints(d3.select("#main-chart"));
+
 
 }
 
 var Polypoints;
 var currentPolygon;
 var polygonpointsSet = [];
+var drawPolygonFlag = false;
+var polygonStack=[];
 
 /**
  * Function to help draw polygons on d3 chart
@@ -357,43 +367,72 @@ function clickPolyPoints(svg) {
     polypoints = []
     currentPolygon = polygon;
     //currentPolypoints = polypoints;
-    svg.on("click", function () {
-        polypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
-        console.log(polypoints.join(" "));
-        updatePolygon(polygon, polypoints);
-    });
-    svg.on("mousemove", function () {
-            var tempPolypoints = polypoints.slice();
-            tempPolypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
-            updatePolygon(polygon, tempPolypoints);
+    if (drawPolygonFlag) {
+        svg.on("click", function () {
+            polypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
+            console.log(polypoints.join(" "));
+            updatePolygon(polygon, polypoints);
+        });
+        svg.on("mousemove", function () {
+                var tempPolypoints = polypoints.slice();
+                tempPolypoints.push(d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
+                updatePolygon(polygon, tempPolypoints);
 
-        }
-    );
-    svg.on("contextmenu", function (data, index) {
-        //handle right click
+            }
+        );
+        svg.on("contextmenu", function (data, index) {
+            //handle right click
 
-        //stop showing browser menu
-        d3.event.preventDefault();
-        polypoints=[];
+            //stop showing browser menu
+            d3.event.preventDefault();
+            polypoints = [];
 
-        updatePolygon(polygon, polypoints);
-    });
-    svg.on("mouseout", function () {
-        updatePolygon(polygon, polypoints);
-    })
+            updatePolygon(polygon, polypoints);
+        });
+        svg.on("mouseout", function () {
+            updatePolygon(polygon, polypoints);
+        })
+        svg.on("dblclick",function(){
+            //console.log("Double click! + ",this);
+            svg.on("click", null);
+            svg.on("mousemove",null);
+            svg.on("contextmenu",null);
+            svg.on("mouseout",null);
+            highlightPolygon();
+        })
+    }
+
+}
+
+function highlightPolygon(){
+    d3.selectAll(".userPolygon")
+        .on("mouseover",function(){
+            console.log("On a polygon!");
+            d3.select(this).classed("highlightPolygon",true);
+            d3.select(this).on("contextmenu",function(){
+                d3.select(this).remove();
+            })
+        })
+        .on("mouseleave", function () {
+            d3.select(this).classed("highlightPolygon",false);
+        })
 }
 
 function undoPolyPoints() {
     if (clickPolyPoints.length > 0) {
-        polypoints =polypoints.slice(0, polypoints.length - 1);
+        polypoints = polypoints.slice(0, polypoints.length - 1);
         updatePolygon(currentPolygon, polypoints);
     }
 }
+function changePolygonColorRed(){
+    currentPolygon.classed("polygonRedify",true);
+}
+function changePolygonColorGreen(){
+    currentPolygon.classed("polygonRedify",false);
+}
 
-
-
-function changePolygonColor(color){
-    currentPolygon.attr("style","fill: "+color);
+function changePolygonColor(color) {
+    currentPolygon.attr("style", "fill: " + color);
 }
 function updatePolygon(polygon, polypoints) {
     polygon.attr('points', "");
