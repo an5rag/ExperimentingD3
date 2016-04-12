@@ -407,10 +407,14 @@ function clickPolyPoints(svg) {
 function highlightPolygon(){
     d3.selectAll(".userPolygon")
         .on("mouseover",function(){
+            d3.event.preventDefault();
             console.log("On a polygon!");
             d3.select(this).classed("highlightPolygon",true);
+
             d3.select(this).on("contextmenu",function(){
-                d3.select(this).remove();
+                d3.select(this).remove()
+                d3.event.preventDefault();
+
             })
         })
         .on("mouseleave", function () {
